@@ -13,11 +13,13 @@ const formatDate = (dateString) => {
 const Index = () => {
   const [transactions, setTransactions] = useState([]);
   const [formData, setFormData] = useState({
+    id: null,
     date: "",
     amount: "",
     type: "expense",
     category: "",
   });
+  const [mode, setMode] = useState("add");
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (event) => {
@@ -49,20 +51,27 @@ const Index = () => {
       return;
     }
 
-    const newTransaction = {
-      id: Date.now(),
-      ...formData,
-      amount: Number(amount),
-    };
+    if (mode === "add") {
+      const newTransaction = {
+        id: Date.now(),
+        ...formData,
+        amount: Number(amount),
+      };
 
-    setTransactions((prevTransactions) => [newTransaction, ...prevTransactions]);
+      setTransactions((prevTransactions) => [newTransaction, ...prevTransactions]);
+    } else {
+      const updatedTransactions = transactions.map((transaction) => (transaction.id === formData.id ? { ...formData, amount: Number(amount) } : transaction));
+      setTransactions(updatedTransactions);
+    }
 
     setFormData({
+      id: null,
       date: "",
       amount: "",
       type: "expense",
       category: "",
     });
+    setMode("add");
     setErrors({});
   };
 
@@ -76,7 +85,7 @@ const Index = () => {
 
       <Box as="section" marginBottom={8}>
         <Heading as="h2" size="lg" marginBottom={4}>
-          Add Transaction
+          {mode === "add" ? "Add" : "Edit"} Transaction
         </Heading>
         <form onSubmit={handleSubmit}>
           <Stack spacing={4}>
@@ -114,7 +123,7 @@ const Index = () => {
               {errors.category && <FormHelperText color="red.500">{errors.category}</FormHelperText>}
             </FormControl>
             <Button type="submit" colorScheme="blue">
-              Add Transaction
+              {mode === "add" ? "Add" : "Update"} Transaction
             </Button>
           </Stack>
         </form>
@@ -145,6 +154,31 @@ const Index = () => {
                   </Td>
                   <Td>{transaction.type}</Td>
                   <Td>{transaction.category}</Td>
+                  <Td>
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={() => {
+                        setFormData(transaction);
+                        setMode("edit");
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </Td>
+                  <Td>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this transaction?")) {
+                          setTransactions((prevTransactions) => prevTransactions.filter((t) => t.id !== transaction.id));
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Td>
                 </Tr>
               ))}
             </Tbody>
